@@ -1,31 +1,10 @@
-from ninja import NinjaAPI, Schema, File
+from ninja import NinjaAPI, File
 from ninja.files import UploadedFile
-from ninja import ModelSchema
 
 from engine.models import Game, Player, GamePlayer, GameStatus
+from api.schemas import GameShow, PlayerShow, GameTile, GameCurrentStatus
 
 api = NinjaAPI()
-
-
-class PlayerShow(ModelSchema):
-    class Meta:
-        model = Player
-        fields = ['id', 'name', 'game']
-
-
-class GameShow(ModelSchema):
-    class Meta:
-        model = Game
-        fields = ['id', 'picture', 'status']
-
-
-class GameTile(Schema):
-    picture: str
-    your_tile: str
-
-
-class GameCurrentStatus(Schema):
-    detail: str = "Game is not ready yet"
 
 
 @api.post("/game", response=GameShow)
