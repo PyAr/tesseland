@@ -3,7 +3,7 @@
 a Tessenation company.
 
 
-# Front
+# Palyers UI
 
 ## Pantalla 1: Register
 
@@ -24,3 +24,12 @@ Busy wait a /session/<id>/<player_name>/status hasta que responda con la figura 
 ## Pantalla 3: Game
 
 Muestra la figura fullscreen.
+
+# Engine
+
+Gestión de Games por Django Admin. Pero con endpoints de gestión para una futura UI distinta.
+
+* Crear Game: POST game/new
+* Registrar un Player en un Game: ´POST game/<id>/register/<player_name>´ 
+* Devolver el status de un Game, para un Player: ´GET game/<id>/status/<player_name>´
+* Arrancar un Game: ´POST game/<id>/start´
