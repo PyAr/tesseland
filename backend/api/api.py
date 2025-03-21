@@ -12,11 +12,16 @@ class GameNotPlayable(Exception):
         self.message = message
 
 
+class GameAlreadyStarted(Exception):
+    def __init__(self, message):
+        self.message = message
+
 @api.exception_handler(GameNotPlayable)
+@api.exception_handler(GameAlreadyStarted)
 def game_not_playable(request, exc):
     return api.create_response(
         request,
-        {"message": "Game is not playable"},
+        {"message": exc.message},
         status=400,
     )
 
@@ -57,17 +62,17 @@ def playing(request, game_id: str, player_name: str):
         your_tile=player.get_public_url()
     )
 
-@api.get("/game/{game_id}/start/", response=GameCurrentStatus)
+@api.post("/game/{game_id}/start/", response=GameCurrentStatus)
 def start(request, game_id: str):
     game = get_object_or_404(Game, id=game_id)
     if game.status != GameStatus.WAITING:
-        raise GameNotPlayable("Game is not waiting" if game.status == GameStatus.PLAYING else "Game is finished")
+        raise GameAlreadyStarted("Game is playing!!")
 
     players = game.players.all()
     tiles = game.compute_tiles()
     
     for tile, player in zip(tiles, game.players.all()):
-        player.your_tile = tile
+        player.figure = tile
         player.save()
 
     game.status = GameStatus.PLAYING
