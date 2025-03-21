@@ -51,6 +51,13 @@ def crop_image(img, boxes):
         yield cropped_img
 
 
+def get_tiles(img, n_tiles):
+    return crop_image(
+        img,
+        compute_boxes(img)
+    )
+
+
 if __name__ == "__main__":
     import sys
     import matplotlib.pyplot as plt

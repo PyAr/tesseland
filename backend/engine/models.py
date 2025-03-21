@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from tiles import get_tiles
 
 
 class GameStatus(models.TextChoices):
@@ -15,12 +16,15 @@ class Game(models.Model):
 
     def get_public_url(self):
         return settings.MEDIA_URL + self.picture.name
+    
+    def compute_tiles(self):
+        return get_tiles(self.picture, self.players.count())
 
 
 class Player(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=10, unique=True)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='players')
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='players'     )
 
 
 class GamePlayer(models.Model):
