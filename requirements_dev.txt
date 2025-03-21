@@ -1,0 +1,2 @@
+ipython
+matplotlib==3.10.1
