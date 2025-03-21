@@ -21,4 +21,4 @@ class GameTile(Schema):
 
 
 class GameCurrentStatus(Schema):
-    detail: str = "Game is not ready yet"
+    status: str = "WAITING"

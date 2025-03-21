@@ -1,10 +1,24 @@
+from django.shortcuts import get_object_or_404
 from ninja import NinjaAPI, File
 from ninja.files import UploadedFile
 
-from engine.models import Game, Player, GamePlayer, GameStatus
+from engine.models import Game, Player, GameStatus
 from api.schemas import GameShow, PlayerShow, GameTile, GameCurrentStatus
 
 api = NinjaAPI()
+
+class GameNotPlayable(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+@api.exception_handler(GameNotPlayable)
+def game_not_playable(request, exc):
+    return api.create_response(
+        request,
+        {"message": "Game is not playable"},
+        status=400,
+    )
 
 
 @api.post("/game", response=GameShow)
@@ -28,55 +42,34 @@ def register_player(request, game_id: str, player_name: str):
 
 @api.get("/game/{game_id}/status", response=GameCurrentStatus)
 def get_game_status(request, game_id: str):
-    try:
-        return GameCurrentStatus(detail=Game.objects.get(id=game_id).status)
-    except Game.DoesNotExist:
-        return GameCurrentStatus(detail="Game not found")
+    return get_object_or_404(Game, id=game_id)    
 
 
-@api.get("/game/{game_id}/players/{player_name}", response=GameTile | GameCurrentStatus)
+@api.get("/game/{game_id}/players/{player_name}", response=GameTile)
 def playing(request, game_id: str, player_name: str):
-    try:
-        game = Game.objects.get(id=game_id)
-        if game.status != GameStatus.PLAYING:
-            return GameCurrentStatus(detail="Game is not playing" if game.status == GameStatus.WAITING else "Game is finished")
-        
-        player = Player.objects.get(game=game, name=player_name)
-        game_player = GamePlayer.objects.get(game=game, player=player)
-        return GameTile(
-            picture=game.get_public_url(),
-            your_tile=game_player.get_public_url()
-        )
-    except Game.DoesNotExist:
-        return GameCurrentStatus(detail="Game not found")
-    except Player.DoesNotExist:
-        return GameCurrentStatus(detail="Player not found")
-    except GamePlayer.DoesNotExist:
-        return GameCurrentStatus(detail="Game player not found")
-
+    game = get_object_or_404(Game, id=game_id)
+    if game.status != GameStatus.PLAYING:
+        raise GameNotPlayable("Game is not playing" if game.status == GameStatus.WAITING else "Game is finished")
+    
+    player = get_object_or_404(Player, game=game, name=player_name)
+    return GameTile(
+        picture=game.get_public_url(),
+        your_tile=player.get_public_url()
+    )
 
 @api.get("/game/{game_id}/start/", response=GameCurrentStatus)
 def start(request, game_id: str):
-    try:
-        game = Game.objects.get(id=game_id)
-        # Check status, solo arranca si està waiting, sino error o algo.
+    game = get_object_or_404(Game, id=game_id)
+    if game.status != GameStatus.WAITING:
+        raise GameNotPlayable("Game is not waiting" if game.status == GameStatus.PLAYING else "Game is finished")
 
-        # Genera los tiles, tantos como Players tenga el game
-        # Asigna tiles a los GamePlayers
-        # Cambia el status del game
-        # devuelve status nuevo
-        players = game.players.all()
-        tiles = game.compute_tiles()
-        # check len de las cosas
-        for tile, player in zip(tiles, game.players.all()):
-            player.your_tile = tile
-            player.save()
+    players = game.players.all()
+    tiles = game.compute_tiles()
+    
+    for tile, player in zip(tiles, game.players.all()):
+        player.your_tile = tile
+        player.save()
 
-        game.status = GameStatus.PLAYING
-        game.save()
-        return GameCurrentStatus(detail=game.status)
-
-    except Game.DoesNotExist:
-        return GameCurrentStatus(detail="Game not found")
-    except Player.DoesNotExist:  # ???
-        return GameCurrentStatus(detail="Player not found")
+    game.status = GameStatus.PLAYING
+    game.save()
+    return GameCurrentStatus(status=game.status)
