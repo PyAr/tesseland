@@ -22,9 +22,9 @@ class Game(models.Model):
         return "http://localhost:8000" + settings.MEDIA_URL + self.picture.name
     
     def compute_tiles(self):
-        # return get_tiles(self.picture, self.players.count())
-        return [self.picture] * self.players.count()
-
+        return get_tiles(self.picture, self.players.count())
+        
+        
 class Player(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=10)

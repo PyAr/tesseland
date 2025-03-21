@@ -9,59 +9,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <div id="app" class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8 text-center">Tesseland Game</h1>
-        
-        <component :is="currentComponent" 
-                  :game-id="gameId"
-                  :player-name="playerName"
-                  @game-created="handleGameCreated"
-                  @player-registered="handlePlayerRegistered"
-                  @game-started="handleGameStarted">
-        </component>
+    <div id="app">
+    <component :is="currentComponent" 
+                :game-id="gameId"
+                :player-name="playerName"
+                @game-created="handleGameCreated"
+                @player-registered="handlePlayerRegistered"
+                @game-started="handleGameStarted">
+    </component>
     </div>
-
     <script>
         const { createApp } = Vue
 
         // Game Setup Component
         const GameSetup = {
             template: `
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold mb-4">Game Setup</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Game ID</label>
-                            <input v-model="localGameId" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Game Picture</label>
-                            <input type="file" @change="handleFileUpload" accept="image/*" class="mt-1 block w-full">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Player Name</label>
-                            <input v-model="localPlayerName" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        </div>
-                        <button @click="createGame" 
-                                class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-                            Create New Game
-                        </button>
-                    </div>
-                    <div class="mt-6 pt-6 border-t">
-                        <h3 class="text-lg font-medium mb-4">Or Join Existing Game</h3>
+                <div class="container mx-auto px-4 py-8">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold mb-4">Game Setup</h2>
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Game ID</label>
                                 <input v-model="localGameId" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Game Picture</label>
+                                <input type="file" @change="handleFileUpload" accept="image/*" class="mt-1 block w-full">
+                            </div>
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Player Name</label>
                                 <input v-model="localPlayerName" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
-                            <button @click="joinGame" 
-                                    class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
-                                Join Game
+                            <button @click="createGame" 
+                                    class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                                Create New Game
                             </button>
+                        </div>
+                        <div class="mt-6 pt-6 border-t">
+                            <h3 class="text-lg font-medium mb-4">Or Join Existing Game</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Game ID</label>
+                                    <input v-model="localGameId" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Player Name</label>
+                                    <input v-model="localPlayerName" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                <button @click="joinGame" 
+                                        class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                                    Join Game
+                                </button>
+
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -112,11 +112,13 @@
         // Waiting Room Component
         const WaitingRoom = {
             template: `
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold mb-4">Waiting for Game to Start</h2>
-                    <div class="text-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p class="text-gray-600">Waiting for other players...</p>
+                <div class="container mx-auto px-4 py-8">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold mb-4">Waiting for Game to Start</h2>
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p class="text-gray-600">Waiting for other players...</p>
+                        </div>
                     </div>
                 </div>
             `,
@@ -146,7 +148,6 @@
         const GamePlay = {
             template: `
                 <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold mb-4">Game in Progress</h2>
                     <div v-if="loading" class="text-center">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                         <p class="text-gray-600">Loading game data...</p>
@@ -154,15 +155,10 @@
                     <div v-else-if="error" class="text-center text-red-500">
                         {{ error }}
                     </div>
-                    <div v-else-if="gameTile" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="font-medium mb-2">Game Picture</h3>
-                            <img :src="gameTile.picture" class="w-full rounded-lg shadow">
-                        </div>
-                        <div>
-                            <h3 class="font-medium mb-2">Your Tile</h3>
-                            <img :src="gameTile.figure" class="w-full rounded-lg shadow">
-                        </div>
+                    <div v-else-if="gameTile" class="relative">
+                        <img :src="image" 
+                             class="w-full h-full object-contain cursor-pointer"
+                             @click="showPicture = !showPicture" />
                     </div>
                 </div>
             `,
@@ -171,11 +167,18 @@
                 return {
                     gameTile: null,
                     loading: true,
-                    error: null
+                    error: null,
+                    showPicture: false
                 }
             },
             async mounted() {
                 await this.loadGameTile()
+            },
+            computed: {
+                image() {
+                    console.log("cambiando imagen")
+                    return this.showPicture ? this.gameTile.picture : this.gameTile.figure
+                }
             },
             methods: {
                 async loadGameTile() {
@@ -190,7 +193,8 @@
                     } finally {
                         this.loading = false
                     }
-                }
+                },
+                
             }
         }
 
