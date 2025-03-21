@@ -1,0 +1,75 @@
+from ninja import NinjaAPI, Schema, File
+from ninja.files import UploadedFile
+from ninja import ModelSchema
+
+from engine.models import Game, Player, GamePlayer, GameStatus
+
+api = NinjaAPI()
+
+
+class PlayerShow(ModelSchema):
+    class Meta:
+        model = Player
+        fields = ['id', 'name', 'game']
+
+
+class GameShow(ModelSchema):
+    class Meta:
+        model = Game
+        fields = ['id', 'picture', 'status']
+
+
+class GameTile(Schema):
+    picture: str
+    your_tile: str
+
+
+class GameCurrentStatus(Schema):
+    detail: str = "Game is not ready yet"
+
+
+@api.post("/game", response=GameShow)
+def create_game(request, game_id: str, file: UploadedFile = File(...)):
+    _game = Game.objects.create(
+        id=game_id, 
+        picture=file, 
+        status=GameStatus.WAITING
+    )
+    return _game
+
+
+@api.post("/game/{game_id}/register/{player_name}", response=PlayerShow)
+def register_player(request, game_id: str, player_name: str):
+    _player = Player.objects.create(
+        name=player_name,
+        game=Game.objects.get(id=game_id)
+    )
+    return _player
+
+
+@api.get("/game/{game_id}/status", response=GameCurrentStatus)
+def get_game_status(request, game_id: str):
+    try:
+        return GameCurrentStatus(detail=Game.objects.get(id=game_id).status)
+    except Game.DoesNotExist:
+        return GameCurrentStatus(detail="Game not found")
+
+
+@api.get("/game/{game_id}/players/{player_name}", response=GameTile | GameCurrentStatus)
+def playing(request, game_id: str, player_name: str):
+    try:
+        game = Game.objects.get(id=game_id)
+        if game.status != GameStatus.PLAYING:
+            return GameCurrentStatus(detail="Game is not playing" if game.status == GameStatus.WAITING else "Game is finished")
+        player = Player.objects.get(game=game, name=player_name)
+        game_player = GamePlayer.objects.get(game=game, player=player)
+        return GameTile(
+            picture=game.get_public_url(),
+            your_tile=game_player.get_public_url()
+        )
+    except Game.DoesNotExist:
+        return GameCurrentStatus(detail="Game not found")
+    except Player.DoesNotExist:
+        return GameCurrentStatus(detail="Player not found")
+    except GamePlayer.DoesNotExist:
+        return GameCurrentStatus(detail="Game player not found")
