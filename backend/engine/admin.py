@@ -8,7 +8,7 @@ class GameAdmin(admin.ModelAdmin):
 
 
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'name', 'game')
 
 
 admin.site.register(Game, GameAdmin)

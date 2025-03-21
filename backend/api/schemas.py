@@ -17,7 +17,7 @@ class GameShow(ModelSchema):
 
 class GameTile(Schema):
     picture: str
-    your_tile: str
+    figure: str
 
 
 class GameCurrentStatus(Schema):
