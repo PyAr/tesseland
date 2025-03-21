@@ -1,9 +1,9 @@
 # Tesseland 1.0
 
-a Tessenation company.
+a Tesselnation company.
 
 
-# Palyers UI
+# Players UI
 
 ## Pantalla 1: Register
 
@@ -25,6 +25,8 @@ Busy wait a /session/<id>/<player_name>/status hasta que responda con la figura 
 
 Muestra la figura fullscreen.
 
+Mientras se hace click en la pantalla, reemplaza la figura con la imagen completa.
+
 # Engine
 
 Gestión de Games por Django Admin. Pero con endpoints de gestión para una futura UI distinta.
@@ -33,3 +35,14 @@ Gestión de Games por Django Admin. Pero con endpoints de gestión para una futu
 * Registrar un Player en un Game: ´POST game/<id>/register/<player_name>´ 
 * Devolver el status de un Game, para un Player: ´GET game/<id>/status/<player_name>´
 * Arrancar un Game: ´POST game/<id>/start´
+
+# ToDO List
+
+* Fin del juego: declarar el fin y determinar el resultado.
+* AuthN/Z de admin y players.
+* Pantallas de admin (replace Django admin).
+* Dyamic game: con cada registro se re-genera el teselado y se re-distribuyen las figuras entre los players.
+* Server-side events: para reemplazar el busy-wait antes de empezar el juego.
+* Video: permitir armar videos, no solo imágenes estáticas.
+* UI enhancements: infinitas cosas para hacer.
+    * Mostrar imagen completa a los usuarios.
