@@ -13,49 +13,82 @@ FIGURE_DEFAULT_HEIGHT = 16 * multiplier  # rows
 FIGURE_DEFAULT_WIDTH= 9 * multiplier  # columns
 
 
-def compute_boxes(img, tile_height=FIGURE_DEFAULT_HEIGHT, tile_width=FIGURE_DEFAULT_WIDTH):
+def compute_boxes(img, rows=None, columns=None):
     """
-    Given an input image, compute the coordinates of tiles that would split the image
-    in rectangles of tile_width x tile_height.
+    Given an input image, compute the coordinates of tiles that would split the image in rows and columns.
 
     """
+    if not rows or not columns:
+        return []
+
     img_width, img_height, _ = img.shape
-    logger.debug("Image size: %i columns, %i rows", img_width, img_height)
+    logger.info("Image size: %i columns, %i rows", img_width, img_height)
+    logger.info("Tiling: %i columns (of width %i), %i rows (of height %i)", columns, FIGURE_DEFAULT_WIDTH, rows, FIGURE_DEFAULT_HEIGHT)
 
-    # using ceil to have tiles that overflow the image
-    rows = ceil(img_height / FIGURE_DEFAULT_HEIGHT)
-    columns = ceil(img_width / FIGURE_DEFAULT_WIDTH)
-    logger.info("Tiling: %i columns (of width %i), %i rows (of height %i)", columns, tile_width, rows, tile_height)
-
-    boxes = []
     for i in range(columns):
         for j in range(rows):
             box_ll = i * FIGURE_DEFAULT_WIDTH, j * FIGURE_DEFAULT_HEIGHT
-            box_ur = min((i+1) * FIGURE_DEFAULT_WIDTH, img_width), min((j+1) * FIGURE_DEFAULT_HEIGHT, img_height)
-            boxes.append((box_ll, box_ur))
+            box_ur = (i+1) * FIGURE_DEFAULT_WIDTH, (j+1) * FIGURE_DEFAULT_HEIGHT
+            yield (box_ll, box_ur)
+            # Each box is represented with a tuple of its lower-left and upper-right corners: (ll_x, ll_y), (ur_x, ur_y)
 
-    # Each box is represented with a tuple of its lower-left and upper-right corners: (ll_x, ll_y), (ur_x, ur_y)
-    return boxes
 
-def crop_image(img, boxes):
-    """
-    Given an input image and a tiling definition (computed with compute_boxes),
-    return the tiles that bundled together complete the image.
+def scale_img_to_best_fit(img):
+    return img
 
-    """
-    tiles = []
-    for ll, ur in boxes:
+
+def crop_image(img, rows=None, columns=None):
+    if not rows or not columns:
+        return []
+
+    rescaled_img = scale_img_to_best_fit(img)
+    for ll, ur in compute_boxes(rescaled_img, rows=rows, columns=columns):
         ll_x, ll_y = ll
         ur_x, ur_y = ur
+        logger.info("tile slice_along_axes: %s, %s", str((ll_x, ur_x)), str((ll_y, ur_y)))
         cropped_img = slice_along_axes(img, [(ll_x, ur_x), (ll_y, ur_y)])
         yield cropped_img
 
 
+def is_prime(n):
+    """Return True if the given number is a prime. Hack. Only checks lower than 100. Fix it."""
+    return n in [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+
+
+def factorize(n):
+    for i in range(1, n):
+        for j in range(1, n):
+            if i * j == n:
+                logger.info("factors: %i, %i", i, j)
+                yield (i, j)
+
+
 def get_tiles(img, n_tiles):
-    return crop_image(
-        img,
-        compute_boxes(img)
-    )
+    img_height, img_width, _ = img.shape
+    img_aspect_ratio = img_height / img_width
+    logger.info("img_aspect_ratio: %f (%s)", img_aspect_ratio, str(img.shape))
+
+    
+    total_tiles = n_tiles
+    while is_prime(total_tiles):
+        total_tiles += 1
+
+    logger.info("Total tiles: %i", total_tiles)
+    # search for the N and M whose ratio is closer to the image's aspect ratio
+    min = 1_000_000.0  # Arbitrary big number.
+    n = 1
+    m = 1
+    rows = n
+    cols = m
+    for n, m in factorize(total_tiles):
+        logger.info("N, M: %i, %i", n, m)
+        logger.info("aspect ratio: %f", n/m)
+        if abs(n/m - img_aspect_ratio) < min:
+            rows = n
+            cols = m
+    logger.info("rows, cols: %i, %i", rows, cols)
+    logger.info("aspect ratio: %f", rows/cols)
+    return crop_image(img, rows=rows, columns=cols)
 
 
 if __name__ == "__main__":
@@ -66,17 +99,14 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=FORMAT)
 
     img = io.imread(sys.argv[1])
+    n_tiles = int(sys.argv[2])
 
-    plt.imshow(img)
+    
 
-    boxes = compute_boxes(img)
-    logger.info("%i tiles", len(boxes))
-    logger.debug("Tiles: %s", str(boxes))
-
-    tiles = crop_image(img, boxes)
+    tiles = get_tiles(img, n_tiles)
     for t in tiles:
         plt.figure()
         plt.imshow(t)
         plt.tight_layout()
-
     plt.show()
+    plt.imshow(img)
