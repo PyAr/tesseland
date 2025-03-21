@@ -40,6 +40,7 @@ def playing(request, game_id: str, player_name: str):
         game = Game.objects.get(id=game_id)
         if game.status != GameStatus.PLAYING:
             return GameCurrentStatus(detail="Game is not playing" if game.status == GameStatus.WAITING else "Game is finished")
+        
         player = Player.objects.get(game=game, name=player_name)
         game_player = GamePlayer.objects.get(game=game, player=player)
         return GameTile(
@@ -52,3 +53,30 @@ def playing(request, game_id: str, player_name: str):
         return GameCurrentStatus(detail="Player not found")
     except GamePlayer.DoesNotExist:
         return GameCurrentStatus(detail="Game player not found")
+
+
+@api.get("/game/{game_id}/start/", response=GameCurrentStatus)
+def start(request, game_id: str):
+    try:
+        game = Game.objects.get(id=game_id)
+        # Check status, solo arranca si està waiting, sino error o algo.
+
+        # Genera los tiles, tantos como Players tenga el game
+        # Asigna tiles a los GamePlayers
+        # Cambia el status del game
+        # devuelve status nuevo
+        players = game.players.all()
+        tiles = game.compute_tiles()
+        # check len de las cosas
+        for tile, player in zip(tiles, game.players.all()):
+            player.your_tile = tile
+            player.save()
+
+        game.status = GameStatus.PLAYING
+        game.save()
+        return GameCurrentStatus(detail=game.status)
+
+    except Game.DoesNotExist:
+        return GameCurrentStatus(detail="Game not found")
+    except Player.DoesNotExist:  # ???
+        return GameCurrentStatus(detail="Player not found")
