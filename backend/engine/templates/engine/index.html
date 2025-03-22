@@ -177,7 +177,8 @@
             computed: {
                 image() {
                     console.log("cambiando imagen")
-                    return this.showPicture ? this.gameTile.picture : this.gameTile.figure
+                    const _image = this.showPicture ? this.gameTile.picture : this.gameTile.figure;
+                    return window.location.origin + _image;
                 }
             },
             methods: {
