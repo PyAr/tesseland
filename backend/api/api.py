@@ -64,8 +64,9 @@ def get_game_status(request, game_id: str):
 @api.get("/game/{game_id}/players/{player_name}", response=GameTile)
 def playing(request, game_id: str, player_name: str):
     game = get_object_or_404(Game, id=game_id)
-    if game.status != GameStatus.PLAYING:
-        raise GameNotPlayable("Game is not playing" if game.status == GameStatus.WAITING else "Game is finished")
+    # Temporal disabled
+    # if game.status != GameStatus.PLAYING:
+    #     raise GameNotPlayable("Game is not playing" if game.status == GameStatus.WAITING else "Game is finished")
     
     player = get_object_or_404(Player, game=game, name=player_name)
     return GameTile(
@@ -80,7 +81,7 @@ def start(request, game_id: str):
         raise GameAlreadyStarted("Game is playing!!")
 
     players = game.players.all()
-    tiles = list(game.compute_tiles())
+    tiles = game.compute_tiles()
     
     for tile, player in zip(tiles, players):
         image = Image.fromarray(tile)
