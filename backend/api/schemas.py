@@ -14,6 +14,11 @@ class GameShow(ModelSchema):
         model = Game
         fields = ['id', 'picture', 'status']
 
+class GameList(Schema):
+    id: str
+    status: str
+    players: list[PlayerShow]
+
 
 class GameTile(Schema):
     picture: str

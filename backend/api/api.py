@@ -7,7 +7,7 @@ from ninja import NinjaAPI, File
 from ninja.files import UploadedFile
 
 from engine.models import Game, Player, GameStatus
-from api.schemas import GameShow, PlayerShow, GameTile, GameCurrentStatus
+from api.schemas import GameShow, PlayerShow, GameTile, GameCurrentStatus, GameList
 
 api = NinjaAPI()
 
@@ -28,6 +28,11 @@ def game_not_playable(request, exc):
         {"message": exc.message},
         status=400,
     )
+
+
+@api.get("/game", response=list[GameList])
+def get_games(request):
+    return Game.objects.filter(status=GameStatus.WAITING)
 
 
 @api.post("/game", response=GameShow)
