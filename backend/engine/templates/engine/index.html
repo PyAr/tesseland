@@ -21,6 +21,23 @@
     <script>
         const { createApp } = Vue
 
+        function requestFullscreen() {
+            var tile = document.getElementById('app');
+            console.debug("Go Fullscreen");
+            if (tile.requestFullscreen) {
+                tile.requestFullscreen();
+            }
+            else if (tile.msRequestFullscreen) {
+                tile.msRequestFullscreen();
+            }
+            else if (tile.mozRequestFullScreen) {
+                tile.mozRequestFullScreen();
+            }
+            else if (tile.webkitRequestFullScreen) {
+                tile.webkitRequestFullScreen();
+            }
+        };
+        
         // Game Setup Component
         const GameSetup = {
             template: `
@@ -130,6 +147,7 @@
                     try {
                         await axios.post(`/api/game/${game_id}/register/${this.localPlayerName.trim()}`)
                         this.$emit('player-registered', game_id, this.localPlayerName)
+                        requestFullscreen()
                     } catch (error) {
                         console.error('Error joining game:', error)
                     }
@@ -213,7 +231,7 @@
                     <div v-else-if="gameTile" class="relative">
                         <img :src="image" 
                              class="w-full h-full object-contain cursor-pointer"
-                             @click="showPicture = !showPicture" />
+                             @click="oneClick($event)" />
                     </div>
                 </div>
             `,
@@ -223,7 +241,9 @@
                     gameTile: null,
                     loading: true,
                     error: null,
-                    showPicture: false
+                    showPicture: false,
+                    clicks: 0,
+                    timer: null
                 }
             },
             async mounted() {
@@ -248,6 +268,21 @@
                     } finally {
                         this.loading = false
                     }
+                },
+                
+                oneClick: function(event){
+                    this.clicks++ 
+                    if(this.clicks === 1) {
+                        var self = this
+                        this.timer = setTimeout(function() {
+                        self.showPicture = !self.showPicture
+                        self.clicks = 0
+                        }, 200);
+                    } else {
+                        clearTimeout(this.timer);  
+                        requestFullscreen();
+                        this.clicks = 0;
+                    }        	
                 },
                 
             }
