@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Most smartphones featured a 16:9 aspect ratio.
 multiplier = 40
-DEFAULT_HEIGHT = 16 * multiplier  # rows
+DEFAULT_HEIGHT = 19 * multiplier  # rows
 DEFAULT_WIDTH = 9 * multiplier  # columns
 
 
