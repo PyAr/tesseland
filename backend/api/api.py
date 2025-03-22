@@ -1,4 +1,8 @@
+from django.core.files.images import ImageFile
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError
+from PIL import Image
+from io import BytesIO
 from ninja import NinjaAPI, File
 from ninja.files import UploadedFile
 
@@ -38,12 +42,19 @@ def create_game(request, game_id: str, file: UploadedFile = File(...)):
 
 @api.post("/game/{game_id}/register/{player_name}", response=PlayerShow)
 def register_player(request, game_id: str, player_name: str):
-    _player = Player.objects.create(
-        name=player_name,
-        game=Game.objects.get(id=game_id)
-    )
-    return _player
-
+    game = get_object_or_404(Game, id=game_id, status=GameStatus.WAITING)
+    try:
+        _player = Player.objects.create(
+            name=player_name,
+            game=game
+        )
+        return _player
+    except IntegrityError:
+        return api.create_response(
+            request,
+            {"message": "Player already registered"},
+            status=400,
+        )
 
 @api.get("/game/{game_id}/status", response=GameCurrentStatus)
 def get_game_status(request, game_id: str):
@@ -59,7 +70,7 @@ def playing(request, game_id: str, player_name: str):
     player = get_object_or_404(Player, game=game, name=player_name)
     return GameTile(
         picture=game.get_public_url(),
-        your_tile=player.get_public_url()
+        figure=player.get_public_url()
     )
 
 @api.post("/game/{game_id}/start/", response=GameCurrentStatus)
@@ -69,10 +80,14 @@ def start(request, game_id: str):
         raise GameAlreadyStarted("Game is playing!!")
 
     players = game.players.all()
-    tiles = game.compute_tiles()
+    tiles = list(game.compute_tiles())
     
-    for tile, player in zip(tiles, game.players.all()):
-        player.figure = tile
+    for tile, player in zip(tiles, players):
+        image = Image.fromarray(tile)
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+
+        player.figure = ImageFile(file=buffer, name=f"{player.game.id}_{player.name}.png")  # hojaldre con el nombre del archivo
         player.save()
 
     game.status = GameStatus.PLAYING

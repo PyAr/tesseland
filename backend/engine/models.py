@@ -15,13 +15,16 @@ class Game(models.Model):
     picture = models.ImageField(upload_to='games')
     status = models.CharField(max_length=10, choices=GameStatus.choices)
 
+    def __str__(self):
+        return self.id
+
     def get_public_url(self):
-        return settings.MEDIA_URL + self.picture.name
+        return "http://192.168.111.52:8000" + settings.MEDIA_URL + self.picture.name
     
     def compute_tiles(self):
-        # return get_tiles(self.picture, self.players.count())
-        return [self.picture] * self.players.count()
-
+        return get_tiles(self.picture.path, self.players.count())
+        
+        
 class Player(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=10)
@@ -32,4 +35,7 @@ class Player(models.Model):
         unique_together = ('game', 'name')
     
     def get_public_url(self):
-        return settings.MEDIA_URL + self.figure.name
+        return "http://192.168.111.52:8000" + settings.MEDIA_URL + self.figure.name
+
+    def __str__(self):
+        return f'{self.game.id} - {self.name}'
