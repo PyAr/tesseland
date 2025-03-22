@@ -118,11 +118,10 @@ def find_best_tiling(img_height, img_width, total_tiles):
     return scaling_factor, best_rows, best_columns
 
 
-
-
-def get_tiles(img, n_tiles):
+def get_tiles(image_path: str, n_tiles):
     if n_tiles < 2:
         raise Exception("Tiles must be at least 2.")
+    img = io.imread(image_path)
 
     img_height, img_width, _ = img.shape
     print("img_height:", img_height, " img_width: ", img_width)
@@ -166,11 +165,11 @@ if __name__ == "__main__":
     FORMAT = "%(asctime)s %(levelno)s %(module)s: %(message)s"
     logging.basicConfig(level=logging.INFO, format=FORMAT)
 
-    img = io.imread(sys.argv[1])
+    img = sys.argv[1]
     n_tiles = int(sys.argv[2])
 
 
-    print("DEfault display tiles size. Heigth: ", DEFAULT_HEIGHT, ", Width: ", DEFAULT_WIDTH)
+    print("Ddfault display tiles size. Heigth: ", DEFAULT_HEIGHT, ", Width: ", DEFAULT_WIDTH)
     tiles = get_tiles(img, n_tiles)
     for t in tiles:
         plt.figure()

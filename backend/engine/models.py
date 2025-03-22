@@ -19,10 +19,10 @@ class Game(models.Model):
         return self.id
 
     def get_public_url(self):
-        return "http://localhost:8000" + settings.MEDIA_URL + self.picture.name
+        return "http://192.168.111.52:8000" + settings.MEDIA_URL + self.picture.name
     
     def compute_tiles(self):
-        return get_tiles(self.picture, self.players.count())
+        return get_tiles(self.picture.path, self.players.count())
         
         
 class Player(models.Model):
@@ -35,7 +35,7 @@ class Player(models.Model):
         unique_together = ('game', 'name')
     
     def get_public_url(self):
-        return "http://localhost:8000" + settings.MEDIA_URL + self.figure.name
+        return "http://192.168.111.52:8000" + settings.MEDIA_URL + self.figure.name
 
     def __str__(self):
         return f'{self.game.id} - {self.name}'
