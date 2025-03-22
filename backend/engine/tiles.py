@@ -145,18 +145,30 @@ def get_tiles(img, n_tiles):
 
     pil_scaled_img = Image.fromarray((scaled_image*255).astype(np.uint8))
 
-    final_img = Image.new("RGBA", size=(final_W, final_H))
+    final_img = create_background((final_W, final_H))
 
     offset_H = ceil((final_H - current_H) / 2)
     offset_W = ceil((final_W - current_W) / 2)
-    print('OFFSETS', offset_H, offset_W)
-    # print('TODO', )
 
     final_img.paste(pil_scaled_img, (offset_W, offset_H))
-    # import ipdb; ipdb.set_trace()
 
     print('BEFORECROP', np.array(final_img).shape)
     return crop_image(np.array(final_img), rows=rows, columns=cols)
+
+
+def create_background(shape):
+    import random
+    from pathlib import Path
+    parent_directory = Path(__file__).parent
+    bgs = parent_directory / "bgs"
+
+    bgs = [file for file in (parent_directory / "bgs").iterdir()
+            if file.is_file() and file.suffix.lower() == '.png']
+    random.shuffle(bgs)
+
+    img = Image.open(bgs[0])
+    reshaped = img.resize(shape, Image.Resampling.LANCZOS)
+    return reshaped
 
 
 if __name__ == "__main__":
