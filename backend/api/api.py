@@ -42,19 +42,16 @@ def create_game(request, game_id: str, file: UploadedFile = File(...)):
 
 @api.post("/game/{game_id}/register/{player_name}", response=PlayerShow)
 def register_player(request, game_id: str, player_name: str):
-    game = get_object_or_404(Game, id=game_id, status=GameStatus.WAITING)
     try:
+        return Player.objects.get(game=game_id, name=player_name)
+    except Player.DoesNotExist:
+        game = get_object_or_404(Game, id=game_id, status=GameStatus.WAITING)
         _player = Player.objects.create(
             name=player_name,
             game=game
         )
         return _player
-    except IntegrityError:
-        return api.create_response(
-            request,
-            {"message": "Player already registered"},
-            status=400,
-        )
+    
 
 @api.get("/game/{game_id}/status", response=GameCurrentStatus)
 def get_game_status(request, game_id: str):
