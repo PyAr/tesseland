@@ -32,7 +32,12 @@ def game_not_playable(request, exc):
 
 @api.get("/game", response=list[GameList])
 def get_games(request):
-    return Game.objects.filter(status=GameStatus.WAITING)
+    return Game.objects.filter(status__in=[GameStatus.WAITING, GameStatus.PLAYING])
+
+
+@api.get("/game/{game_id}", response=GameList)
+def get_game(request, game_id: str):
+    return get_object_or_404(Game, id=game_id)
 
 
 @api.post("/game", response=GameShow)
@@ -40,20 +45,21 @@ def create_game(request, game_id: str, file: UploadedFile = File(...)):
     _game = Game.objects.create(
         id=game_id, 
         picture=file, 
-        status=GameStatus.WAITING
+        status=GameStatus.WAITING,
     )
     return _game
 
 
 @api.post("/game/{game_id}/register/{player_name}", response=PlayerShow)
-def register_player(request, game_id: str, player_name: str):
+def register_player(request, game_id: str, player_name: str, is_owner: bool = False):
     try:
         return Player.objects.get(game=game_id, name=player_name)
     except Player.DoesNotExist:
         game = get_object_or_404(Game, id=game_id, status=GameStatus.WAITING)
         _player = Player.objects.create(
             name=player_name,
-            game=game
+            game=game,
+            is_owner=is_owner
         )
         return _player
     
@@ -76,7 +82,7 @@ def playing(request, game_id: str, player_name: str):
         figure=player.get_public_url()
     )
 
-@api.post("/game/{game_id}/start/", response=GameCurrentStatus)
+@api.post("/game/{game_id}/start", response=GameCurrentStatus)
 def start(request, game_id: str):
     game = get_object_or_404(Game, id=game_id)
     if game.status != GameStatus.WAITING:

@@ -23,12 +23,16 @@ class Game(models.Model):
     
     def compute_tiles(self):
         return get_tiles(self.picture.path, self.players.count())
+    
+    def get_owner(self):
+        return self.players.filter(is_owner=True).first()
         
         
 class Player(models.Model):
     id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=10)
+    name = models.CharField(max_length=255)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='players' )
+    is_owner = models.BooleanField(default=False)
     figure = models.ImageField(upload_to='figures', null=True, blank=True)
 
     class Meta:
