@@ -1,14 +1,6 @@
-from itertools import product
 from math import ceil
-from skimage import io
-from skimage.transform import rescale
-from skimage.util import slice_along_axes
-import numpy as np
 from PIL import Image
-import logging
 
-
-logger = logging.getLogger(__name__)
 
 # Most smartphones featured a 16:9 aspect ratio.
 multiplier = 40
@@ -24,7 +16,7 @@ def compute_boxes(rows=None, columns=None):
     if not rows or not columns:
         return []
 
-    logger.info("Tiling: %i columns (of width %i), %i rows (of height %i)", columns, DEFAULT_WIDTH, rows, DEFAULT_HEIGHT)
+    print("Tiling: %i columns (of width %i), %i rows (of height %i)" %(columns, DEFAULT_WIDTH, rows, DEFAULT_HEIGHT))
 
     for i in range(columns):
         # TODO FIX THIS
@@ -41,17 +33,20 @@ def compute_boxes(rows=None, columns=None):
             # Each box is represented with a tuple of its lower-left and upper-right corners: (ll_x, ll_y), (ur_x, ur_y)
 
 
-def crop_image(img, rows=None, columns=None):
-    if not rows or not columns:
+def crop_image(image=None, rows=None, columns=None):
+    if image is None or rows is None or columns is None:
         return []
 
     for ul, lr in compute_boxes(rows=rows, columns=columns):
         ul_x, ul_y = ul
         lr_x, lr_y = lr
 
-        logger.info("tile slice_along_axes: x=%s, y=%s", str((ul_x, lr_x)), str((ul_y, lr_y)))
-        cropped_img = slice_along_axes(img, [(ul_y, lr_y), (ul_x, lr_x)])
-        yield cropped_img
+        tile = image.transform(
+            (DEFAULT_WIDTH, DEFAULT_HEIGHT),  
+            method=Image.Transform.EXTENT, 
+            data=(ul_x, ul_y, lr_x, lr_y)
+        )
+        yield tile
 
 
 def is_prime(n):
@@ -118,41 +113,49 @@ def find_best_tiling(img_height, img_width, total_tiles):
     return scaling_factor, best_rows, best_columns
 
 
+def fit_image_in_display(img, total_tiles):
+    """
+    Given the display's dimensions, create a new image that fits exactly in the display.
+    REturn a display configuration that's a dict with the image and the number of rows and columns.
+    """
+    img_width, img_height = img.size
+    print("img_height:", img_height, " img_width: ", img_width)
+
+    scaling_factor, rows, cols = find_best_tiling(img_height, img_width, total_tiles)
+    display_height = rows * DEFAULT_HEIGHT
+    display_width = cols * DEFAULT_WIDTH
+    print("Display height:", display_height, ", display width: ", display_width)
+
+    scaled_img_width = ceil(img_width * scaling_factor)
+    scaled_img_height = ceil(img_height * scaling_factor)
+    print("Scaling factor:", scaling_factor, "Rows:", rows, ", Columns: ", cols)
+    print("scaled img_height:", scaled_img_height, ", scaled img_width: ", scaled_img_width)
+
+    scaled_image = img.resize((scaled_img_width, scaled_img_height))
+
+    scaled_img_height, scaled_img_width = img_height * scaling_factor, img_width * scaling_factor
+    display_height, display_width = rows * DEFAULT_HEIGHT, cols * DEFAULT_WIDTH
+
+    # Fit the scaled image into the display, filling the gaps with a background image.
+    final_img = create_background((display_width, display_height))
+    offset_H = ceil((display_height - scaled_img_height) / 2)
+    offset_W = ceil((display_width - scaled_img_width) / 2)
+    final_img.paste(scaled_image, (offset_W, offset_H))
+
+    return {"image": final_img, "rows": rows, "columns": cols}
+
 def get_tiles(image_path: str, n_tiles):
     if n_tiles < 2:
         raise Exception("Tiles must be at least 2.")
-    img = io.imread(image_path)
-
-    img_height, img_width, _ = img.shape
-    print("img_height:", img_height, " img_width: ", img_width)
+    img = Image.open(image_path)
 
     total_tiles = n_tiles
     while is_prime(total_tiles):
         total_tiles += 1
 
-    scaling_factor, rows, cols = find_best_tiling(img_height, img_width, total_tiles)
-    print("Scaling factor:", scaling_factor, "Rows:", rows, ", Columns: ", cols)
-    print("scaled img_height:", img_height * scaling_factor, ", scaled img_width: ", img_width * scaling_factor)
-    print("Display height:", rows * DEFAULT_HEIGHT, ", display width: ", cols * DEFAULT_WIDTH)
-    scaled_image = rescale(img, [scaling_factor, scaling_factor, 1])
+    display_config = fit_image_in_display(img, total_tiles)
 
-    # TODO
-    # crear imagen "vacía" del tamaño del display
-    # meter la scaled_image dentro de esa caja y continuar
-    current_H, current_W = img_height * scaling_factor, img_width * scaling_factor
-    final_H, final_W = rows * DEFAULT_HEIGHT, cols * DEFAULT_WIDTH
-
-    pil_scaled_img = Image.fromarray((scaled_image*255).astype(np.uint8))
-
-    final_img = create_background((final_W, final_H))
-
-    offset_H = ceil((final_H - current_H) / 2)
-    offset_W = ceil((final_W - current_W) / 2)
-
-    final_img.paste(pil_scaled_img, (offset_W, offset_H))
-
-    print('BEFORECROP', np.array(final_img).shape)
-    return crop_image(np.array(final_img), rows=rows, columns=cols)
+    return crop_image(**display_config)
 
 
 def create_background(shape):
@@ -174,12 +177,12 @@ if __name__ == "__main__":
     import sys
     import matplotlib.pyplot as plt
 
-    FORMAT = "%(asctime)s %(levelno)s %(module)s: %(message)s"
-    logging.basicConfig(level=logging.INFO, format=FORMAT)
 
     img = sys.argv[1]
     n_tiles = int(sys.argv[2])
-
+    plt.figure()
+    plt.imshow(Image.open(img))
+    
 
     print("Ddfault display tiles size. Heigth: ", DEFAULT_HEIGHT, ", Width: ", DEFAULT_WIDTH)
     tiles = get_tiles(img, n_tiles)
@@ -188,4 +191,4 @@ if __name__ == "__main__":
         plt.imshow(t)
         plt.tight_layout()
     plt.show()
-    plt.imshow(img)
+    
