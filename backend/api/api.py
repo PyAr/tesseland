@@ -92,9 +92,8 @@ def start(request, game_id: str):
     tiles = game.compute_tiles()
     
     for tile, player in zip(tiles, players):
-        image = Image.fromarray(tile)
         buffer = BytesIO()
-        image.save(buffer, format="PNG")
+        tile.save(buffer, format="PNG")
 
         player.figure = ImageFile(file=buffer, name=f"{player.game.id}_{player.name}.png")  # hojaldre con el nombre del archivo
         player.save()
