@@ -275,7 +275,7 @@
         // Game Play Component
         const GamePlay = {
             template: `
-                <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="">
                     <div v-if="loading" class="text-center">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                         <p class="text-gray-600">Loading game data...</p>
@@ -284,9 +284,7 @@
                         {{ error }}
                     </div>
                     <div v-else-if="gameTile" class="relative">
-                        <img :src="image" 
-                             class="w-full h-full object-contain cursor-pointer"
-                             @click="oneClick($event)" />
+                        <img :src="image" width="100%" height="100%" @click="oneClick($event)" />
                     </div>
                 </div>
             `,
