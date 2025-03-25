@@ -2,6 +2,19 @@
 
 a Tesselnation company.
 
+# Como utilizarlo
+
+Para configurar la aplicación por primera vez se deben correr las migraciones
+
+```sh
+> uv run backend/manage.py migrate
+```
+
+Después para levantar el servidor: 
+
+```sh
+> uv run backend/manage.py runserver 0.0.0.0:8000
+```
 
 # Players UI
 
